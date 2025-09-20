@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Smart Shop Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg1:#0f172a;
+      --bg2:#1e293b;
+      --card:#1e293b;
+      --accent:#00e7ff;
+      --accent-glow:0 0 12px rgba(0,231,255,0.8);
+      --text:#f1f5f9;
+      --muted:#94a3b8;
+    }
+    body.light {
+      --bg1:#f3f4f6;
+      --bg2:#e5e7eb;
+      --card:#ffffff;
+      --text:#1e293b;
+      --muted:#6b7280;
+      --accent:#2563eb;
+      --accent-glow:0 0 12px rgba(37,99,235,0.6);
+    }
+    * { box-sizing:border-box; font-family:'Outfit', sans-serif; }
+    body {
+      margin:0;
+      min-height:100vh;
+      background:linear-gradient(-45deg,var(--bg1),var(--bg2));
+      background-size:400% 400%;
+      animation:bgMove 12s ease infinite;
+      color:var(--text);
+      padding:24px;
+      transition:all .4s ease;
+    }
+    @keyframes bgMove {
+      0% {background-position:0 50%;}
+      50% {background-position:100% 50%;}
+      100% {background-position:0 50%;}
+    }
+    .wrap{max-width:1100px;margin:0 auto}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    h1{font-size:28px;margin:0;font-weight:700;color:var(--accent);text-shadow:var(--accent-glow);}
+    .top-actions{display:flex;gap:10px}
+    .btn{
+      background:var(--accent);
+      color:#fff;
+      padding:10px 14px;
+      border-radius:10px;
+      border:none;
+      cursor:pointer;
+      font-weight:600;
+      transition:all .2s ease;
+      box-shadow:var(--accent-glow);
+    }
+    .btn:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 0 16px var(--accent);}
+    .btn.secondary{
+      background:transparent;
+      color:var(--accent);
+      border:1px solid var(--accent);
+      box-shadow:none;
+    }
+    .btn.secondary:hover{background:rgba(0,0,0,0.05);}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:20px}
+    .card{
+      background:var(--card);
+      padding:18px;
+      border-radius:14px;
+      box-shadow:0 4px 24px rgba(0,0,0,.2);
+      backdrop-filter:blur(10px);
+      animation:fadeIn .6s ease;
+      transition:all .4s ease;
+    }
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none}}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input,select{
+      width:100%;
+      padding:10px;
+      border-radius:8px;
+      border:1px solid rgba(0,0,0,.1);
+      background:rgba(255,255,255,0.05);
+      color:inherit;
+      transition:all .2s ease;
+    }
+    input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 8px var(--accent);}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;text-align:left;font-size:14px}
+    th{color:var(--muted);font-weight:600;font-size:12px;border-bottom:1px solid rgba(0,0,0,.1);}
+    tr:hover{background:rgba(0,0,0,.05)}
+    .pill{background:rgba(0,0,0,0.05);padding:4px 10px;border-radius:999px;font-size:12px;color:var(--accent)}
+    .low{color:red;font-weight:700}
+    footer{margin-top:20px;text-align:center;color:var(--muted);font-size:12px}
+    @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>✨ Smart Shop Manager</h1>
+      <div class="top-actions">
+        <button class="btn" id="toggle-theme">🌗 Theme</button>
+        <button class="btn" id="add-product-btn">+ Add Product</button>
+        <button class="btn secondary" id="export-btn">Export CSV</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div>
+            <div style="color:var(--muted);font-size:13px">Inventory Value</div>
+            <div style="font-weight:700;font-size:20px;color:var(--accent)">₹ <span id="inventory-value">0</span></div>
+          </div>
+          <div class="pill">Products: <span id="product-count">0</span></div>
+        </div>
+
+        <div style="margin-bottom:12px;display:flex;gap:8px">
+          <input id="search" placeholder="🔍 Search products...">
+          <select id="sort">
+            <option value="new">Newest</option>
+            <option value="name">Name A–Z</option>
+            <option value="lowstock">Low Stock First</option>
+            <option value="value">Value High→Low</option>
+          </select>
+        </div>
+
+        <table>
+          <thead><tr><th>Product</th><th>Price</th><th>Stock</th><th></th></tr></thead>
+          <tbody id="products-tbody"></tbody>
+        </table>
+      </section>
+
+      <aside class="card">
+        <h3 id="form-title" style="margin-top:0;color:var(--accent)">Add Product</h3>
+        <label>Name</label><input id="name">
+        <label>SKU</label><input id="sku">
+        <label>Price (₹)</label><input id="price" type="number" min="0">
+        <label>Quantity</label><input id="qty" type="number" min="0">
+        <label>Low stock alert</label><input id="low" type="number" min="0" value="5">
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn" id="save-btn">Save</button>
+          <button class="btn secondary" id="reset-btn">Reset</button>
+        </div>
+        <hr style="margin:14px 0;border:none;border-top:1px solid rgba(0,0,0,.1)">
+        <div style="color:var(--muted);font-size:13px">Quick Sales</div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <select id="sell-select"></select>
+          <input id="sell-qty" type="number" min="1" value="1" style="width:80px">
+          <button class="btn" id="sell-btn">Sell</button>
+        </div>
+      </aside>
+    </div>
+
+    <footer>💡 Built with HTML + CSS + JS — data saved in your browser.</footer>
+  </div>
+
+  <script>
+    const LS_KEY = "smartshop_products_v1";
+    let products = JSON.parse(localStorage.getItem(LS_KEY) || "[]");
+    let editingId = null;
+    const tbody = document.getElementById("products-tbody");
+    const productCount = document.getElementById("product-count");
+    const inventoryValue = document.getElementById("inventory-value");
+    const search = document.getElementById("search");
+    const sort = document.getElementById("sort");
+    const formTitle = document.getElementById("form-title");
+    const inputs = {
+      name: document.getElementById("name"),
+      sku: document.getElementById("sku"),
+      price: document.getElementById("price"),
+      qty: document.getElementById("qty"),
+      low: document.getElementById("low"),
+    };
+    const saveBtn = document.getElementById("save-btn");
+    const resetBtn = document.getElementById("reset-btn");
+    const addProductBtn = document.getElementById("add-product-btn");
+    const sellSelect = document.getElementById("sell-select");
+    const sellQty = document.getElementById("sell-qty");
+    const sellBtn = document.getElementById("sell-btn");
+    const exportBtn = document.getElementById("export-btn");
+    const toggleThemeBtn = document.getElementById("toggle-theme");
+
+    function saveToLS(){localStorage.setItem(LS_KEY,JSON.stringify(products));}
+    function uid(){return Math.random().toString(36).slice(2,9);}
+    function number(n){return Number(n).toLocaleString("en-IN");}
+    function escapeHtml(s){return (s+"").replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+    function render(){
+      let list=products.slice();
+      const q=search.value.trim().toLowerCase();
+      if(q)list=list.filter(p=>p.name.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q));
+      const s=sort.value;
+      if(s==="name")list.sort((a,b)=>a.name.localeCompare(b.name));
+      else if(s==="lowstock")list.sort((a,b)=>a.qty-b.qty);
+      else if(s==="value")list.sort((a,b)=>b.price*b.qty - a.price*a.qty);
+      else list.sort((a,b)=>b.created - a.created);
+      tbody.innerHTML="";
+      let inv=0;
+      for(const p of list){
+        inv+=p.price*p.qty;
+        const tr=document.createElement("tr");
+        tr.innerHTML=`<td><strong>${escapeHtml(p.name)}</strong><div style="color:var(--muted);font-size:12px">${escapeHtml(p.sku)}</div></td>
+          <td>₹ ${number(p.price)}</td>
+          <td>${p.qty}${p.qty<=p.low?'<span class="low"> (Low)</span>':""}</td>
+          <td style="text-align:right">
+            <button class="btn" style="padding:4px 8px;font-size:12px" data-edit="${p.id}">Edit</button>
+            <button class="btn secondary" style="padding:4px 8px;font-size:12px" data-delete="${p.id}">Delete</button>
+          </td>`;
+        tbody.appendChild(tr);
+      }
+      productCount.textContent=products.length;
+      inventoryValue.textContent=number(inv);
+      buildSellSelect();
+    }
+    function buildSellSelect(){
+      sellSelect.innerHTML="";
+      for(const p of products){
+        const opt=document.createElement("option");
+        opt.value=p.id;
+        opt.textContent=`${p.name} — ₹${number(p.price)} (${p.qty})`;
+        sellSelect.appendChild(opt);
+      }
+    }
+    function addProduct(p){p.id=uid();p.created=Date.now();products.push(p);saveToLS();render();}
+    function updateProduct(id,data){const i=products.findIndex(x=>x.id===id);if(i>-1){products[i]=Object.assign(products[i],data);saveToLS();render();}}
+    function deleteProduct(id){products=products.filter(p=>p.id!==id);saveToLS();render();}
+    function resetForm(){inputs.name.value="";inputs.sku.value="";inputs.price.value="";inputs.qty.value="";inputs.low.value=5;editingId=null;}
+    function startEdit(id){const p=products.find(x=>x.id===id);if(!p)return;editingId=id;formTitle.textContent="Edit Product";saveBtn.textContent="Update";
+      inputs.name.value=p.name;inputs.sku.value=p.sku;inputs.price.value=p.price;inputs.qty.value=p.qty;inputs.low.value=p.low;}
+    saveBtn.addEventListener("click",()=>{
+      const data={name:inputs.name.value.trim(),sku:inputs.sku.value.trim(),price:parseFloat(inputs.price.value)||0,qty:parseInt(inputs.qty.value)||0,low:parseInt(inputs.low.value)||0};
+      if(!data.name)return alert("Name required");
+      if(editingId){updateProduct(editingId,data);editingId=null;formTitle.textContent="Add Product";saveBtn.textContent="Save";}else addProduct(data);
+      resetForm();
+    });
+    resetBtn.addEventListener("click",resetForm);
+    addProductBtn.addEventListener("click",()=>{editingId=null;formTitle.textContent="Add Product";saveBtn.textContent="Save";resetForm();});
+    tbody.addEventListener("click",(e)=>{
+      const edit=e.target.closest("[data-edit]"),del=e.target.closest("[data-delete]");
+      if(edit)startEdit(edit.getAttribute("data-edit"));
+      if(del && confirm("Delete this product?"))deleteProduct(del.getAttribute("data-delete"));
+    });
+    sellBtn.addEventListener("click",()=>{
+      const id=sellSelect.value,q=parseInt(sellQty.value)||1,p=products.find(x=>x.id===id);
+      if(!p)return alert("Select product");
+      if(p.qty<q)return alert("Not enough stock");
+      p.qty-=q;saveToLS();render();alert(`Sold ${q} x ${p.name} — ₹${number(p.price*q)}`);
+    });
+    search.addEventListener("input",render);
+    sort.addEventListener("change",render);
+    exportBtn.addEventListener("click",()=>{
+      const rows=[["Name","SKU","Price","Qty","Low"]];
+      for(const p of products)rows.push([p.name,p.sku,p.price,p.qty,p.low]);
+      const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+      const blob=new Blob([csv],{type:"text/csv"});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");a.href=url;a.download="products.csv";a.click();URL.revokeObjectURL(url);
+    });
+
+    // 🌗 Theme toggle
+    const themeLSKey = "smartshop_theme";
+    function applyTheme(){
+      const saved = localStorage.getItem(themeLSKey);
+      if(saved==="light")document.body.classList.add("light");
+      else document.body.classList.remove("light");
+    }
+    toggleThemeBtn.addEventListener("click",()=>{
+      document.body.classList.toggle("light");
+      localStorage.setItem(themeLSKey,document.body.classList.contains("light")?"light":"dark");
+    });
+    if(products.length===0){
+      products=[
+        {id:uid(),name:"Notebook A4",sku:"NB-A4",price:25,qty:80,low:10,created:Date.now()-1000000},
+        {id:uid(),name:"Blue Pen",sku:"PEN-B",price:8,qty:200,low:20,created:Date.now()-900000},
+        {id:uid(),name:"Stapler",sku:"ST-01",price:150,qty:6,low:5,created:Date.now()-800000}
+      ];
+      saveToLS();
+    }
+    applyTheme();
+    render();
+  </script>
+</body>
+</html>
